@@ -23,18 +23,20 @@
         <h1 id="title">About</h1>
         <p class="subtle">This page reflects the coin you searched from the homepage.</p>
         <div id="results" class="result" style="margin-top:12px">
-          <div class="skeleton" style="width:120px; height:28px; border-radius:999px"></div>
-          <div class="stat">
-            <div class="label">Symbol</div>
-            <div class="value"><span class="skeleton" style="display:block; height:18px; width:80px"></span></div>
-          </div>
-          <div class="stat">
-            <div class="label">Price (USD)</div>
-            <div class="value"><span class="skeleton" style="display:block; height:18px; width:140px"></span></div>
-          </div>
-          <div class="stat">
-            <div class="label">Market Cap (USD)</div>
-            <div class="value"><span class="skeleton" style="display:block; height:18px; width:220px"></span></div>
+          <div id="coin-core">
+            <div class="skeleton" style="width:120px; height:28px; border-radius:999px"></div>
+            <div class="stat">
+              <div class="label">Symbol</div>
+              <div class="value"><span class="skeleton" style="display:block; height:18px; width:80px"></span></div>
+            </div>
+            <div class="stat">
+              <div class="label">Price (USD)</div>
+              <div class="value"><span class="skeleton" style="display:block; height:18px; width:140px"></span></div>
+            </div>
+            <div class="stat">
+              <div class="label">Market Cap (USD)</div>
+              <div class="value"><span class="skeleton" style="display:block; height:18px; width:220px"></span></div>
+            </div>
           </div>
           <div id="metadata-section" style="display:none; margin-top:24px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.08)"></div>
           <div id="categories-section" style="display:none; margin-top:20px"></div>
@@ -63,6 +65,7 @@
           title.textContent = coin ? `About ${coin}` : 'About';
           if (coin) {
             const out = document.getElementById('results');
+            const coinCore = document.getElementById('coin-core');
             const currency = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
             const integer = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
 
@@ -70,7 +73,7 @@
               .then(r => r.json())
               .then(data => {
                 if (!data || data.error) {
-                  out.innerHTML = '<div class="muted">No data available.</div>';
+                  if (coinCore) coinCore.innerHTML = '<div class="muted">No data available.</div>';
                   return;
                 }
 
@@ -79,7 +82,7 @@
                 const price = (data.price_usd == null ? '—' : currency.format(Number(data.price_usd)));
                 const mcap = (data.marketcap_usd == null ? '—' : '$' + integer.format(Number(data.marketcap_usd)));
 
-                out.innerHTML = `
+                if (coinCore) coinCore.innerHTML = `
                   <div class="badge">Source: ${src}</div>
                   <div class="stat">
                     <div class="label">Symbol</div>
@@ -193,7 +196,7 @@
                 // Sections are rendered later as well
               })
               .catch(() => {
-                out.innerHTML = '<div class="muted">Failed to load data.</div>';
+                if (coinCore) coinCore.innerHTML = '<div class="muted">Failed to load data.</div>';
               });
           }
         } catch (e) {
