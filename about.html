@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>About · Crypto Analyzer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="container header-inner">
+        <div class="brand">
+          <span class="brand-badge" aria-hidden="true"></span>
+          <span>Crypto Analyzer</span>
+        </div>
+        <nav class="nav" aria-label="Primary">
+          <a href="index.html">Home</a>
+        </nav>
+      </div>
+    </header>
+    <main class="center">
+      <div class="card fade-in">
+        <h1 id="title">About</h1>
+        <p class="subtle">This page reflects the coin you searched from the homepage.</p>
+        <div id="results" class="result" style="margin-top:12px">
+          <div class="skeleton" style="width:120px; height:28px; border-radius:999px"></div>
+          <div class="stat">
+            <div class="label">Symbol</div>
+            <div class="value"><span class="skeleton" style="display:block; height:18px; width:80px"></span></div>
+          </div>
+          <div class="stat">
+            <div class="label">Price (USD)</div>
+            <div class="value"><span class="skeleton" style="display:block; height:18px; width:140px"></span></div>
+          </div>
+          <div class="stat">
+            <div class="label">Market Cap (USD)</div>
+            <div class="value"><span class="skeleton" style="display:block; height:18px; width:220px"></span></div>
+          </div>
+          <div id="metadata-section" style="display:none; margin-top:24px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.08)"></div>
+          <div id="categories-section" style="display:none; margin-top:20px"></div>
+          <div id="dev-stats-section" style="display:none; margin-top:20px"></div>
+          <div id="global-section" style="display:none; margin-top:24px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.08)"></div>
+          <div id="trending-section" style="display:none; margin-top:20px"></div>
+          <div id="exchanges-section" style="display:none; margin-top:20px"></div>
+        </div>
+        <p>
+          <a class="btn link" href="index.html">← Back to home</a>
+        </p>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>© <span id="year"></span> Crypto Analyzer</span>
+        <span>Stay curious</span>
+      </div>
+    </footer>
+    <script>
+      (function () {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const coin = (params.get('coin') || '').trim();
+          const title = document.getElementById('title');
+          title.textContent = coin ? `About ${coin}` : 'About';
+          if (coin) {
+            const out = document.getElementById('results');
+            const currency = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+            const integer = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+
+            fetch(`/api/coin?coin=${encodeURIComponent(coin)}`)
+              .then(r => r.json())
+              .then(data => {
+                if (!data || data.error) {
+                  out.innerHTML = '<div class="muted">No data available.</div>';
+                  return;
+                }
+
+                const src = String(data.source || '').toUpperCase();
+                const sym = (data.symbol ? String(data.symbol).toUpperCase() : '—');
+                const price = (data.price_usd == null ? '—' : currency.format(Number(data.price_usd)));
+                const mcap = (data.marketcap_usd == null ? '—' : '$' + integer.format(Number(data.marketcap_usd)));
+
+                out.innerHTML = `
+                  <div class="badge">Source: ${src}</div>
+                  <div class="stat">
+                    <div class="label">Symbol</div>
+                    <div class="value">${sym}</div>
+                  </div>
+                  <div class="stat">
+                    <div class="label">Price (USD)</div>
+                    <div class="value">${price}</div>
+                  </div>
+                  <div class="stat">
+                    <div class="label">Market Cap (USD)</div>
+                    <div class="value">${mcap}</div>
+                  </div>
+                `;
+
+                // Metadata section
+                const metaSection = document.getElementById('metadata-section');
+                if (metaSection && (data.description || data.homepage || data.twitter || data.github)) {
+                  let metaHtml = '<h2 style="font-size:20px; margin:0 0 12px; font-weight:700">About</h2>';
+                  if (data.description) {
+                    // Strip HTML tags from description
+                    const temp = document.createElement('div');
+                    temp.innerHTML = String(data.description);
+                    let desc = temp.textContent || temp.innerText || '';
+                    desc = desc.substring(0, 500);
+                    metaHtml += `<p style="color:var(--muted); line-height:1.7; margin:0 0 16px">${desc}${String(data.description).length > 500 ? '...' : ''}</p>`;
+                  }
+                  const links = [];
+                  if (data.homepage) {
+                    const url = String(data.homepage).replace(/"/g, '&quot;');
+                    links.push(`<a href="${url}" target="_blank" rel="noreferrer" class="link-btn">🌐 Homepage</a>`);
+                  }
+                  if (data.twitter) {
+                    const url = String(data.twitter).replace(/"/g, '&quot;');
+                    links.push(`<a href="${url}" target="_blank" rel="noreferrer" class="link-btn">🐦 Twitter</a>`);
+                  }
+                  if (data.github) {
+                    const url = String(data.github).replace(/"/g, '&quot;');
+                    links.push(`<a href="${url}" target="_blank" rel="noreferrer" class="link-btn">💻 GitHub</a>`);
+                  }
+                  if (links.length > 0) {
+                    metaHtml += `<div class="links" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px">${links.join('')}</div>`;
+                  }
+                  metaSection.innerHTML = metaHtml;
+                  metaSection.style.display = 'block';
+                }
+
+                // Categories section
+                const catSection = document.getElementById('categories-section');
+                if (catSection && Array.isArray(data.categories) && data.categories.length > 0) {
+                  const escapeHtml = (str) => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                  // Normalize, dedupe, sort for consistent display
+                  const normalized = Array.from(
+                    new Set(
+                      data.categories
+                        .map(c => String(c || '').trim())
+                        .filter(Boolean)
+                    )
+                  ).sort((a,b) => a.localeCompare(b));
+
+                  const MAX_VISIBLE = 3;
+                  const visible = normalized.slice(0, MAX_VISIBLE);
+                  const hidden = normalized.slice(MAX_VISIBLE);
+
+                  const visibleHtml = visible.map(c => `<span class="category-badge">${escapeHtml(c)}</span>`).join('');
+                  const hiddenHtml = hidden.map(c => `<span class="category-badge">${escapeHtml(c)}</span>`).join('');
+
+                  const moreBtn = hidden.length > 0
+                    ? `<button id="show-more-categories" class="btn secondary" style="padding:6px 10px; font-size:12px">Show ${hidden.length} more</button>`
+                    : '';
+
+                  catSection.innerHTML = `
+                    <h2 style="font-size:20px; margin:0 0 12px; font-weight:700">Categories</h2>
+                    <div class="categories" style="display:flex; gap:8px; flex-wrap:wrap">${visibleHtml}
+                      ${hidden.length ? `<span id="more-categories" style="display:none">${hiddenHtml}</span>` : ''}
+                    </div>
+                    ${moreBtn}
+                  `;
+                  catSection.style.display = 'block';
+
+                  const btn = document.getElementById('show-more-categories');
+                  if (btn) {
+                    btn.addEventListener('click', () => {
+                      const more = document.getElementById('more-categories');
+                      if (more) more.style.display = 'inline';
+                      btn.remove();
+                    });
+                  }
+                }
+
+                // Developer stats section
+                const devSection = document.getElementById('dev-stats-section');
+                if (devSection && data.developer_stats) {
+                  const ds = data.developer_stats;
+                  const devHtml = `
+                    <h2 style="font-size:20px; margin:0 0 12px; font-weight:700">Developer Stats</h2>
+                    <div class="dev-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-top:12px">
+                      ${ds.stars > 0 ? `<div class="stat"><div class="label">⭐ Stars</div><div class="value">${integer.format(ds.stars)}</div></div>` : ''}
+                      ${ds.forks > 0 ? `<div class="stat"><div class="label">🍴 Forks</div><div class="value">${integer.format(ds.forks)}</div></div>` : ''}
+                      ${ds.subscribers > 0 ? `<div class="stat"><div class="label">👥 Subscribers</div><div class="value">${integer.format(ds.subscribers)}</div></div>` : ''}
+                      ${ds.commit_count_4_weeks > 0 ? `<div class="stat"><div class="label">📝 Commits (4w)</div><div class="value">${integer.format(ds.commit_count_4_weeks)}</div></div>` : ''}
+                      ${ds.pull_requests_merged > 0 ? `<div class="stat"><div class="label">🔀 PRs Merged</div><div class="value">${integer.format(ds.pull_requests_merged)}</div></div>` : ''}
+                      ${ds.pull_request_contributors > 0 ? `<div class="stat"><div class="label">👤 Contributors</div><div class="value">${integer.format(ds.pull_request_contributors)}</div></div>` : ''}
+                      ${ds.total_issues > 0 ? `<div class="stat"><div class="label">📋 Issues</div><div class="value">${integer.format(ds.total_issues)}</div></div>` : ''}
+                    </div>
+                  `;
+                  devSection.innerHTML = devHtml;
+                  devSection.style.display = 'block';
+                }
+
+                // Sections are rendered later as well
+              })
+              .catch(() => {
+                out.innerHTML = '<div class="muted">Failed to load data.</div>';
+              });
+          }
+        } catch (e) {
+          // ignore
+        }
+        // Always render global/trending/exchanges, even if coin fetch fails or no coin provided
+        (function renderGlobal() {
+          const el = document.getElementById('global-section');
+          if (!el || el.getAttribute('data-loaded') === '1') return;
+          const integer = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+          fetch('/api/global')
+            .then(r => r.json())
+            .then(g => {
+              const d = g && (g.data || g);
+              if (!d) return;
+              const totalMcap = d.total_market_cap && (d.total_market_cap.usd ?? null);
+              const btcDom = d.market_cap_percentage && (d.market_cap_percentage.btc ?? null);
+              el.innerHTML = `
+                <h2 style="font-size:20px; margin:0 0 12px; font-weight:700">Global Market</h2>
+                <div class="dev-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+                  <div class="stat"><div class="label">Active Cryptocurrencies</div><div class="value">${integer.format(d.active_cryptocurrencies || 0)}</div></div>
+                  <div class="stat"><div class="label">Markets</div><div class="value">${integer.format(d.markets || 0)}</div></div>
+                  <div class="stat"><div class="label">Total Market Cap (USD)</div><div class="value">${totalMcap == null ? '—' : '$' + integer.format(Number(totalMcap))}</div></div>
+                  <div class="stat"><div class="label">BTC Dominance</div><div class="value">${btcDom == null ? '—' : (Number(btcDom).toFixed(1) + '%')}</div></div>
+                </div>
+              `;
+              el.style.display = 'block';
+              el.setAttribute('data-loaded','1');
+            })
+            .catch(() => {/* ignore */});
+        })();
+
+        (function renderTrending() {
+          const el = document.getElementById('trending-section');
+          if (!el || el.getAttribute('data-loaded') === '1') return;
+          fetch('/api/trending')
+            .then(r => r.json())
+            .then(t => {
+              const items = (t && Array.isArray(t.coins) ? t.coins : []).map(x => x.item).slice(0, 7);
+              if (!items.length) return;
+              const chips = items.map(it => `<span class="category-badge">#${it.market_cap_rank ?? it.score ?? ''} ${String(it.symbol || it.name || '').toUpperCase()}</span>`).join('');
+              el.innerHTML = `
+                <h2 style="font-size:20px; margin:0 0 12px; font-weight:700">Trending Now</h2>
+                <div style="display:flex; gap:8px; flex-wrap:wrap">${chips}</div>
+              `;
+              el.style.display = 'block';
+              el.setAttribute('data-loaded','1');
+            })
+            .catch(() => {/* ignore */});
+        })();
+
+        (function renderExchanges() {
+          const el = document.getElementById('exchanges-section');
+          if (!el || el.getAttribute('data-loaded') === '1') return;
+          fetch('/api/exchanges')
+            .then(r => r.json())
+            .then(xs => {
+              const list = Array.isArray(xs) ? xs.slice(0, 6) : [];
+              if (!list.length) return;
+              const rows = list.map(x => `
+                <div class="stat">
+                  <div class="label">${String(x.name || 'Exchange')}</div>
+                  <div class="value">Rank ${x.trust_score_rank ?? '—'}</div>
+                </div>
+              `).join('');
+              el.innerHTML = `
+                <h2 style="font-size:20px; margin:0 0 12px; font-weight:700">Top Exchanges</h2>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px">${rows}</div>
+              `;
+              el.style.display = 'block';
+              el.setAttribute('data-loaded','1');
+            })
+            .catch(() => {/* ignore */});
+        })();
+        var y = document.getElementById('year');
+        if (y) y.textContent = new Date().getFullYear();
+      })();
+    </script>
+  </body>
+  </html>
+
+

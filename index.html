@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Crypto Analyzer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="container header-inner">
+        <div class="brand">
+          <span class="brand-badge" aria-hidden="true"></span>
+          <span>Crypto Analyzer</span>
+        </div>
+        <nav class="nav" aria-label="Primary">
+          <a href="index.html" aria-current="page">Home</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="center">
+      <div class="card fade-in">
+        <h1>Analyze any crypto</h1>
+        <p class="subtle">Type the coin name to jump to its details.</p>
+        <form id="coin-form">
+          <label for="coin-input" class="visually-hidden">Crypto name</label>
+          <input id="coin-input" type="text" placeholder="e.g. Bitcoin" aria-label="Crypto name" />
+          <button class="btn" type="submit">Go</button>
+        </form>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>© <span id="year"></span> Crypto Analyzer</span>
+        <span>Made with ♥</span>
+      </div>
+    </footer>
+    <script>
+      (function () {
+        const form = document.getElementById('coin-form');
+        const input = document.getElementById('coin-input');
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          const value = (input.value || '').trim();
+          if (!value) {
+            input.focus();
+            return;
+          }
+          const q = encodeURIComponent(value);
+          window.location.href = `about.html?coin=${q}`;
+        });
+        var y = document.getElementById('year');
+        if (y) y.textContent = new Date().getFullYear();
+      })();
+    </script>
+  </body>
+  </html>
+
+

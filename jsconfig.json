@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "skipLibCheck": true,
+    "module": "es2022",
+    "moduleResolution": "node16",
+    "target": "es2022",
+    "strict": false,
+    "baseUrl": "."
+  },
+  "exclude": [
+    "node_modules",
+    "**/node_modules/**"
+  ]
+}
+
